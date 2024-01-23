@@ -45,7 +45,15 @@ RUN curl  https://www.stunnel.org/archive/5.x/stunnel-${STUNNEL_VERSION}.tar.gz 
     && tar -xf /usr/src/stunnel.tar.gz
 WORKDIR /usr/src/stunnel-${STUNNEL_VERSION}
 RUN ./configure --prefix=/usr && make && make install
-RUN chmod 600 /cert/cert.pem /cert/key.pem /cert/cert.crt
+RUN mkdir /cert
+RUN openssl req -x509 -out /cert/cert.crt -keyout /cert/key.pem \
+  -newkey rsa:2048 -nodes -sha256 \
+  -subj '/CN=localhost' -extensions EXT -config <( \
+   printf "[dn]\nCN=localhost\n[req]\ndistinguished_name = dn\n[EXT]\nsubjectAltName=DNS:localhost\nkeyUsage=digitalSignature\nextendedKeyUsage=serverAuth") \
+  && cat /cert/key.pem > /cert/cert.pem \
+  && cat /cert/cert.crt >> /cert/cert.pem \
+  && chmod 600 /cert/cert.pem /cert/key.pem /cert/cert.crt
+
 RUN ls -la
 RUN echo -e "foreground=yes\n" > /usr/etc/stunnel/stunnel.conf \
     && echo -e "[AppRTC GAE]\n" >> /usr/etc/stunnel/stunnel.conf \ 
