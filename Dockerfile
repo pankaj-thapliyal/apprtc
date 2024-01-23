@@ -46,13 +46,12 @@ RUN curl  https://www.stunnel.org/archive/5.x/stunnel-${STUNNEL_VERSION}.tar.gz 
 WORKDIR /usr/src/stunnel-${STUNNEL_VERSION}
 RUN ./configure --prefix=/usr && make && make install
 
-RUN mkdir /cert
-COPY ./cert.crt /cert
-COPY ./cert.pem /cert
-COPY ./cert.pem /cert
- 
-RUN chmod 600 /cert/cert.pem /cert/key.pem /cert/cert.crt
-
+#RUN mkdir /cert
+#COPY ./cert.crt /cert
+#COPY ./cert.pem /cert
+#COPY ./cert.pem /cert
+RUN ls -la
+RUN chmod 600 -R /cert
 RUN echo -e "foreground=yes\n" > /usr/etc/stunnel/stunnel.conf \
     && echo -e "[AppRTC GAE]\n" >> /usr/etc/stunnel/stunnel.conf \ 
     && echo -e "accept=0.0.0.0:443\n" >> /usr/etc/stunnel/stunnel.conf \
