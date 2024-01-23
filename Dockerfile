@@ -45,22 +45,16 @@ RUN curl  https://www.stunnel.org/archive/5.x/stunnel-${STUNNEL_VERSION}.tar.gz 
     && tar -xf /usr/src/stunnel.tar.gz
 WORKDIR /usr/src/stunnel-${STUNNEL_VERSION}
 RUN ./configure --prefix=/usr && make && make install
-RUN mkdir /cert
-RUN openssl req -x509 -out /cert/cert.crt -keyout /cert/key.pem \
-  -newkey rsa:2048 -nodes -sha256 \
-  -subj '/CN=localhost' -extensions EXT -config <( \
-   printf "[dn]\nCN=localhost\n[req]\ndistinguished_name = dn\n[EXT]\nsubjectAltName=DNS:localhost\nkeyUsage=digitalSignature\nextendedKeyUsage=serverAuth") \
-  && cat /cert/key.pem > /cert/cert.pem \
-  && cat /cert/cert.crt >> /cert/cert.pem \
-  && chmod 600 /cert/cert.pem /cert/key.pem /cert/cert.crt
-
-RUN ls -la
+COPY . .
+# stunnel configuration
 RUN echo -e "foreground=yes\n" > /usr/etc/stunnel/stunnel.conf \
-    && echo -e "[AppRTC GAE]\n" >> /usr/etc/stunnel/stunnel.conf \ 
+    && echo -e "[AppRTC GAE]\n" >> /usr/etc/stunnel/stunnel.conf \
     && echo -e "accept=0.0.0.0:443\n" >> /usr/etc/stunnel/stunnel.conf \
     && echo -e "connect=0.0.0.0:8080\n" >> /usr/etc/stunnel/stunnel.conf \
-    && echo -e "cert=/cert/cert.pem\n" >> /usr/etc/stunnel/stunnel.conf 
+    && echo -e "cert=/cert/cert.pem\n" >> /usr/etc/stunnel/stunnel.conf
 
+# Additional stunnel configuration if needed
+# ...
 RUN echo -e  "/usr/bin/stunnel &\n" >> /go/start.sh \
     && echo -e "wait -n\n" >> /go/start.sh \
     && echo -e "exit $?\n" >> /go/start.sh \
@@ -68,6 +62,7 @@ RUN echo -e  "/usr/bin/stunnel &\n" >> /go/start.sh \
 
 # Start the bash wrapper that keeps both collider and the AppRTC GAE app running. 
 CMD /go/start.sh
+# Start the bash wrapper that keeps both collider and the AppRTC GAE app running.
 
 ## Instructions (Tested on Debian 11 only):
 # - Download the Dockerfile from the AppRTC repo and put it in a folder, e.g. 'apprtc'
